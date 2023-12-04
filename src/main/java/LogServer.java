@@ -12,25 +12,27 @@ public class LogServer implements ILogServer {
     }
 
     @Override
+    public void appendEvent(String event) {
+        // 逻辑：将事件添加到当前事件列表，然后重新构建Merkle树
+        // 注意：这里可以优化，只更新树的相关部分，而不是完全重建
+        merkleTree.appendEvent(event);
+    }
+
+    @Override
     public byte[] getCurrentRootHash() {
         return merkleTree.getRootHash();
     }
 
     @Override
-    public void appendEvent(String event) {
-        // Append the event to your log and rebuild or update your Merkle Tree
-    }
-
-    @Override
     public List<byte[]> genPath(String event) {
-        // Implement logic to generate the audit path for the event
-        return null;
+        // 逻辑：生成并返回验证事件的审计路径
+        return merkleTree.genPath(event);
     }
 
     @Override
     public List<byte[]> genProof(int oldTreeSize, int newTreeSize) {
-        // Implement logic to generate the consistency proof
-        return null;
+        // 逻辑：生成并返回一致性证明
+        return merkleTree.genProof(oldTreeSize, newTreeSize);
     }
 
     // Additional methods and logic to be implemented
