@@ -7,64 +7,65 @@ public class Node {
     Node left;
     Node right;
     public Node parent;
+    int startIndex; // Node's start index
+    int endIndex; // Node's end index
 
-    Node(String data) {
+    // Constructor for leaf nodes
+    Node(String data, int index) {
         this.data = data;
-        this.hash = calculateHash(data);
+        this.hash = calculateHash(data.getBytes());
         this.left = null;
         this.right = null;
         this.parent = null;
+        this.startIndex = index;
+        this.endIndex = index; // Leaf node covers itself
     }
 
-    Node(Node left, Node right) {
+    // Constructor for internal nodes
+    Node(Node left, Node right, int start, int end) {
         this.left = left;
         this.right = right;
-        // 如果左右子节点不为空，将它们的数据串联后计算哈希值
-        this.data = (left != null ? left.data : "") + (right != null ? right.data : "");
-        this.hash = calculateHash(this.data);
-        // 为左右子节点设置父节点为当前节点
+        this.data = ""; // Not used for internal nodes
+        this.startIndex = start;
+        this.endIndex = end;
+        // Update parent references
         if (left != null) left.parent = this;
         if (right != null) right.parent = this;
+        // Calculate the hash for the internal node
+        this.hash = calculateInternalNodeHash(left.hash, right.hash);
     }
 
-    private static byte[] calculateHash(String data) {
+    // Hash calculation for internal nodes
+    private byte[] calculateInternalNodeHash(byte[] leftHash, byte[] rightHash) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            // 使用UTF-8编码将字符串转换为字节
-            byte[] inputBytes = data.getBytes("UTF-8");
-            return digest.digest(inputBytes);
-        } catch (NoSuchAlgorithmException | java.io.UnsupportedEncodingException e) {
-            throw new RuntimeException("Could not create hash", e);
+            digest.update((byte)0x01); // Prepend the internal node marker
+            digest.update(leftHash);
+            if (rightHash != null) {
+                digest.update(rightHash);
+            }
+            return digest.digest();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Hashing algorithm not found", e);
         }
     }
 
-    public boolean isLeaf() {
-        return left == null && right == null;
-    }
-
-    // 更新当前节点的哈希值
-    public void updateHash() {
-        if (isLeaf()) {
-            // 如果是叶子节点，直接使用数据重新计算哈希
-            this.hash = calculateHash(this.data);
-        } else {
-            // 否则，使用左右子节点的哈希值计算当前节点的哈希
-            String combinedHash = "";
-            if (left != null) {
-                combinedHash += bytesToHex(left.hash);
-            }
-            if (right != null) {
-                combinedHash += bytesToHex(right.hash);
-            }
-            this.hash = calculateHash(combinedHash);
+    // Hash calculation for data
+    private static byte[] calculateHash(byte[] data) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            digest.update((byte)0x00); // Prepend the leaf node marker
+            return digest.digest(data);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Hashing algorithm not found", e);
         }
     }
 
-    // 将字节数组转换为十六进制字符串
+    // Convert a byte array to a hex string
     private static String bytesToHex(byte[] hash) {
         StringBuilder hexString = new StringBuilder(2 * hash.length);
-        for (byte b : hash) {
-            String hex = Integer.toHexString(0xff & b);
+        for (int i = 0; i < hash.length; i++) {
+            String hex = Integer.toHexString(0xff & hash[i]);
             if (hex.length() == 1) {
                 hexString.append('0');
             }
@@ -72,5 +73,16 @@ public class Node {
         }
         return hexString.toString();
     }
-}
 
+    // Check if the node is a leaf
+    public boolean isLeaf() {
+        return left == null && right == null;
+    }
+
+    // Update the hash value of the current node
+    public void updateHash() {
+        if (!isLeaf()) {
+            this.hash = calculateInternalNodeHash(left.hash, right.hash);
+        }
+    }
+}

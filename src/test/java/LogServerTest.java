@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class LogServerTest {
     private LogServer logServer;
+    private MerkleTree merkleTree;
 
     @TempDir
     Path tempDir; // JUnit 5 将在这里注入一个临时目录的路径
@@ -53,16 +54,28 @@ class LogServerTest {
 
     @Test
     void testGenProof() {
-        // 测试genProof是否为给定的树大小返回了正确的一致性证明
-        int oldSize = 2; // 用旧的树大小
-        int newSize = 3; // 新树添加了一个事件后的大小
+        // 设置测试参数
+        int oldSize = 2;
+        int newSize = 3;
+
+        // 调用待测试的方法
         List<byte[]> proof = logServer.genProof(oldSize, newSize);
 
-        assertNotNull(proof);
-        // 证明的长度应该是逻辑上的长度，可以根据 Merkle 树的具体实现来断言
-        // 这里的长度只是一个示例
-        assertEquals(proof.size(), calculateExpectedProofSize(oldSize, newSize));
+        // 验证结果不应为空
+        assertNotNull(proof, "The proof should not be null");
+
+        // 验证证明的长度是否符合预期
+        int expectedSize = calculateExpectedProofSize(oldSize, newSize);
+        assertEquals(expectedSize, proof.size(), "The proof size does not match the expected value");
+
+        // 验证证明的内容正确性（可根据具体实现添加）
+        // 例如，可以添加对证明中哈希值正确性的校验
+
+        // 测试特殊情况，例如oldSize >= newSize
+        proof = logServer.genProof(newSize, oldSize);
+        assertTrue(proof.isEmpty(), "The proof should be empty for invalid tree size inputs");
     }
+
 
     // 辅助方法将字节数组转换为十六进制字符串
     private String bytesToHex(byte[] bytes) {

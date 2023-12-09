@@ -36,11 +36,17 @@ class MerkleTreeTest {
 
     @Test
     void testMerkleTreeConstruction() {
+        // Setup
         List<String> events = Arrays.asList("Event1", "Event2", "Event3");
         MerkleTree tree = new MerkleTree(events);
-        assertNotNull(tree.getRootHash(), "The root hash should not be null for non-empty tree");
-        // 更多的断言可以加入来检查树的结构
+
+        // Assertions
+        assertNotNull(tree.getRootHash(), "The root hash should not be null for a non-empty tree");
+        // Additional assertions to check the structure of the tree.
+        // This can include checking the indices and hashes of the nodes.
     }
+
+
 
     @Test
     void testEmptyTree() {
@@ -57,30 +63,60 @@ class MerkleTreeTest {
 
     @Test
     void testGenPath() {
-        List<String> events = Arrays.asList("Event1", "Event2", "Event3");
-        MerkleTree tree = new MerkleTree(events);
+        // 创建一个包含三个事件的默克尔树
+        MerkleTree tree = new MerkleTree(Arrays.asList("Event1", "Event2", "Event3"));
+        // 为存在的事件生成路径
         List<byte[]> path = tree.genPath("Event2");
+        // 验证路径不应为空
         assertNotNull(path, "Path should not be null");
+        // 路径不应为空
         assertFalse(path.isEmpty(), "Path should not be empty for existing event");
-        // 进一步检查路径的正确性，例如长度和具体的哈希值
+        // 这里可以添加更多的断言来检查路径的具体内容
     }
+
 
     @Test
     void testGenProof() {
-        List<String> events = Arrays.asList("Event1", "Event2", "Event3");
-        MerkleTree tree = new MerkleTree(events);
+        // 创建一个包含三个事件的默克尔树
+        MerkleTree tree = new MerkleTree(Arrays.asList("Event1", "Event2", "Event3"));
+        // 向树中添加一个新事件
         tree.appendEvent("Event4");
+        // 生成前三个事件和四个事件状态之间的一致性证明
         List<byte[]> proof = tree.genProof(3, 4);
+        // 验证证明不应为空
         assertNotNull(proof, "Proof should not be null");
-        // 断言证明的正确性，例如长度和哈希值
+        // 这里可以添加更多的断言来检查证明的具体内容
     }
+
 
     @Test
     void testGenPathForNonExistingEvent() {
+        // 创建一个包含三个事件的默克尔树
         MerkleTree tree = new MerkleTree(Arrays.asList("Event1", "Event2", "Event3"));
+        // 尝试为不存在的事件生成路径
         List<byte[]> path = tree.genPath("EventX");
+        // 路径应该为空
         assertTrue(path.isEmpty(), "Path should be empty for non-existing event");
     }
+
+
+    @Test
+    void testNodeRangeIndex() {
+        Node leaf1 = new Node("Event1", 0);
+        Node leaf2 = new Node("Event2", 1);
+        Node internalNode = new Node(leaf1, leaf2, leaf1.startIndex, leaf2.endIndex);
+
+        assertEquals(0, leaf1.startIndex);
+        assertEquals(0, leaf1.endIndex);
+        assertEquals(1, leaf2.startIndex);
+        assertEquals(1, leaf2.endIndex);
+        assertEquals(0, internalNode.startIndex);
+        assertEquals(1, internalNode.endIndex);
+    }
+
+
+// 测试其他功能和边界情况...
+
 
 
 

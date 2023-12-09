@@ -1,3 +1,4 @@
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
@@ -13,8 +14,9 @@ public class MerkleTree implements IMerkleTree {
     }
 
     public void appendEvent(String event) {
-        eventList.add(event); // 将新事件添加到事件列表
-        Node newLeaf = new Node(event);
+        int newIndex = eventList.size(); // Assuming the index is 0-based and contiguous
+        eventList.add(event);
+        Node newLeaf = new Node(event, newIndex); // Pass the new index here
 
         if (root == null) {
             root = newLeaf;
@@ -27,76 +29,86 @@ public class MerkleTree implements IMerkleTree {
     //空间复杂度：由于仅存储必要的节点，空间复杂度为 O(n)，每个事件对应一个节点。
 
     private Node insertAndRecalculate(Node current, Node newLeaf) {
+        // Base case: if current is null, just return the new leaf
         if (current == null) {
             return newLeaf;
         }
 
-        // 如果当前节点是叶子节点，创建一个新的内部节点
+        // If the current node is a leaf, then we need to create a new parent node
         if (current.isLeaf()) {
-            Node parent = new Node(current, newLeaf);
+            // New internal node will have the current leaf as the left child, newLeaf as the right child
+            // The start index will be that of the current leaf, and the end index will be that of newLeaf
+            Node parent = new Node(current, newLeaf, current.startIndex, newLeaf.endIndex);
+            // Now, newLeaf and current both have the same parent
+            newLeaf.parent = parent;
+            current.parent = parent;
             return parent;
         }
 
-        // 决定是向左还是向右分支更新树
-        if (shouldGoLeft(current)) {
-            current.left = insertAndRecalculate(current.left, newLeaf);
-        } else {
-            current.right = insertAndRecalculate(current.right, newLeaf);
-        }
+        // If the current node is not a leaf, decide where to insert the new leaf
+        // This logic will depend on your tree structure and how you want to balance it
+        // For simplicity, let's say we always add to the right
+        current.right = insertAndRecalculate(current.right, newLeaf);
 
-        // 更新当前节点的哈希值
+        // After insertion, recalculate the hash for the current node
         current.updateHash();
         return current;
     }
 
+
+
     private boolean shouldGoLeft(Node node) {
-        // 根据树的结构或者其他标准来决定新的叶子节点是应该添加到左边还是右边
-        // 例如，可以根据节点的数量或者深度来决定
-        // 这里需要具体的实现逻辑
-        return true; // 临时返回值，需要替换为真正的逻辑
+        // 检查左子树是否比右子树矮或者右子树已满
+        if (node.left == null || (node.right != null && getTreeDepth(node.left) <= getTreeDepth(node.right))) {
+            return true;
+        } else {
+            return false;
+        }
     }
+
 
     private Node buildTree(List<String> events) {
         List<Node> nodes = new ArrayList<>();
-        for (String event : events) {
-            nodes.add(new Node(event));
+
+        // Create leaf nodes for each event with correct indices
+        for (int i = 0; i < events.size(); i++) {
+            nodes.add(new Node(events.get(i), i));
         }
 
-        // 当节点数量大于1时，继续组合它们
+        // Combine nodes until only the root node is left
         while (nodes.size() > 1) {
             List<Node> updatedNodes = new ArrayList<>();
             for (int i = 0; i < nodes.size(); i += 2) {
                 Node left = nodes.get(i);
                 Node right = (i + 1 < nodes.size()) ? nodes.get(i + 1) : null;
 
-                // 创建父节点的数据字符串
-                String parentData = left.hash.toString(); // 将字节转换为适当的字符串表示
-                if (right != null) {
-                    parentData += right.hash.toString(); // 同上
-                }
+                // Calculate the range covered by the new internal node
+                int start = left.startIndex;
+                int end = (right != null) ? right.endIndex : left.endIndex;
 
-                // 创建父节点
-                Node parent = new Node(parentData);
-                parent.left = left;
-                parent.right = right;
+                // Create the parent node
+                Node parent = new Node(left, right, start, end);
                 updatedNodes.add(parent);
             }
-            nodes = updatedNodes; // 准备下一轮合并
+            nodes = updatedNodes; // Update the list for the next iteration
         }
 
-        // 检查节点列表是否为空，如果是，返回 null
-        return nodes.isEmpty() ? null : nodes.get(0); // 安全地返回根节点或null
+        // Return the root of the tree or null if the list of events was empty
+        return nodes.isEmpty() ? null : nodes.get(0);
     }
 
 
     private static byte[] calculateHash(String data) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            return digest.digest(data.getBytes());
+            digest.update((byte)0x00); // Leaf node marker
+            digest.update(data.getBytes(StandardCharsets.UTF_8)); // Your data
+            return digest.digest();
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Could not find hashing algorithm", e);
         }
     }
+
 
     @Override
     public byte[] getRootHash() {
