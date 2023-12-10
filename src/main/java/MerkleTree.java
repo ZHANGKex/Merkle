@@ -163,7 +163,7 @@ public class MerkleTree {
 
         for (int i = 10; i < space; i++)
             System.out.print(" ");
-        System.out.println(Arrays.toString(node.hash) + " [" + node.start + ", " + node.end + "]");
+        System.out.println(Arrays.toString(node.hash) + " {" + node.start + ", " + node.end + "}");
 
         printTree(node.left, space);
     }

@@ -13,11 +13,11 @@ public class Auditor {
 
     public boolean isMember(String event, int index) {
         LinkedList<byte[]> auditPath = server.genPath(index);
-        byte[] pathHash = buildHash(event, index, auditPath);
+        byte[] pathHash = buildAuditPathHash(event, index, auditPath);
         return Arrays.equals(pathHash, rootHash);
     }
 
-    private byte[] buildHash(String event, int index, LinkedList<byte[]> auditPath) {
+    private byte[] buildAuditPathHash(String event, int index, LinkedList<byte[]> auditPath) {
         byte[] currentHash = server.getMerkleTree().computeHash(event.getBytes());
         int pathIndex = index;
 
