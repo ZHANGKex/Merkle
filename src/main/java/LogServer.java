@@ -1,3 +1,4 @@
+import java.util.Arrays;
 import java.util.Queue;
 import java.util.LinkedList;
 import java.util.Scanner;
@@ -73,7 +74,7 @@ public class LogServer {
     public LinkedList<byte[]> genPath(int index) {
         LinkedList<byte[]> path = new LinkedList<>();
         MerkleTree current = tree;
-        while (current != null && current.getStart() != current.getEnd()) {
+        while (current != null && (current.getLeft() != null || current.getRight() != null)) {
             MerkleTree left = current.getLeft();
             MerkleTree right = current.getRight();
 
@@ -84,9 +85,12 @@ public class LogServer {
                 path.add(left.getHash());
                 current = right;
             }
+
+            System.out.println("Current Hash: " + Arrays.toString(current.getHash()));
         }
         return path;
     }
+
 
     public LinkedList<byte[]> genProof(int index) {
         LinkedList<byte[]> proof = new LinkedList<>();

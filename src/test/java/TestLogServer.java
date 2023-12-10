@@ -20,10 +20,10 @@ public class TestLogServer {
 
     @Test
     public void testGenerateAuditPath() {
-        // 创建 LogServer 对象
+        // 创建 LogServer 对象，提供输入文件路径
         LogServer logServer = new LogServer("src/test/java/logFile/input.txt");
 
-        // 向日志中添加一些条目
+        // 向 Merkle 树中添加一些条目
         logServer.append("Log 1");
         logServer.append("Log 2");
         logServer.append("Log 3");
@@ -34,35 +34,55 @@ public class TestLogServer {
         // 生成审核路径
         LinkedList<byte[]> auditPath = logServer.genPath(logIndex);
 
-        // 打印审核路径（用于调试）
+        System.out.println(auditPath);
+        int treeDepth = calculateTreeDepth(logServer.getMerkleTree());
+        System.out.println("Tree Depth: " + treeDepth);
         System.out.println(auditPath);
 
-        // 验证路径中的哈希值是否正确
-        // 这里你需要编写代码来验证生成的审核路径是否有效和正确
-        // 例如，你可以验证路径的长度是否足够，以及哈希值是否与预期的一致
-        // 可以使用 assert 语句进行验证
+        int expectedPathLength = treeDepth - 1;
+        assertEquals(expectedPathLength, auditPath.size());
     }
 
-//
-//    @Test
-//    public void testGenerateProof() {
-//        LogServer logServer = new LogServer("data/input.txt"); // 请替换为你的输入文件路径
-//        logServer.append("Log 1");
-//        logServer.append("Log 2");
-//        logServer.append("Log 3");
-//        int logIndex = /* 日志的索引 */; // 请提供一个日志索引以测试
-//        LinkedList<byte[]> proof = logServer.genProof(logIndex);
-//        // 验证证明中的哈希值是否正确
-//        // 检查证明是否足够长，并验证哈希值
-//    }
-//
-//    @Test
-//    public void testLogServerEquality() {
-//        LogServer logServer1 = new LogServer("data/input1.txt"); // 请替换为不同的输入文件路径
-//        LogServer logServer2 = new LogServer("data/input2.txt"); // 请替换为与logServer1不同的输入文件路径
-//        // 添加相同的日志到两个日志服务器
-//        assertEquals(logServer1, logServer2);
-//    }
+    private int calculateTreeDepth(MerkleTree tree) {
+        if (tree == null) {
+            return 0;
+        } else if (tree.getLeft() == null && tree.getRight() == null) {
+            return 1;
+        } else {
+            int leftDepth = calculateTreeDepth(tree.getLeft());
+            int rightDepth = calculateTreeDepth(tree.getRight());
+            return Math.max(leftDepth, rightDepth) + 1;
+        }
+    }
+
+    @Test
+    public void testGenProof() {
+        LogServer logServer = new LogServer("src/test/java/logFile/input.txt");
+        logServer.append("Log 1");
+        logServer.append("Log 2");
+        logServer.append("Log 3");
+
+        int logIndex = 1; // 请提供一个日志索引以测试
+
+        LinkedList<byte[]> proof = logServer.genProof(logIndex);
+
+        System.out.println(proof);
+        int treeDepth = calculateTreeDepth(logServer.getMerkleTree());
+        assertEquals(treeDepth, proof.size());
+
+    }
+
+
+    @Test
+    public void testEquals() {
+        LogServer logServer1 = new LogServer("src/test/java/logFile/input.txt");
+        LogServer logServer2 = new LogServer("src/test/java/logFile/input.txt");
+
+        boolean areEqual = logServer1.equals(logServer2);
+
+        assertTrue(areEqual);
+    }
+
 
     public static void main(String[] args) {
         String inputFile = "src/test/java/logFile/input.txt"; // 请替换为你的输入文件路径
@@ -71,10 +91,8 @@ public class TestLogServer {
         logServer.append("1");
         logServer.append("1");
 
-        // 计算根哈希值
         byte[] expectedRootHash = logServer.currentRootHash();
 
-        // 打印根哈希值
         System.out.println("Expected Root Hash: " + Arrays.toString(expectedRootHash));
 
     }

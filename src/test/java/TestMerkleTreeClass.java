@@ -29,17 +29,14 @@ public class TestMerkleTreeClass {
 
     @Test
     public void testMerkleTreeEquality() {
-        // 创建两个相同的叶子节点，它们应该相等
         MerkleTree t1 = new MerkleTree("1", 1);
         MerkleTree t2 = new MerkleTree("1", 1);
         assertEquals(t1, t2);
 
-        // 创建两个不同的叶子节点，它们的哈希值不同，应该不相等
         MerkleTree t3 = new MerkleTree("1", 1);
         MerkleTree t4 = new MerkleTree("2", 1);
         assertNotEquals(t3, t4);
 
-        // 创建两个相同的内部节点，它们的子树结构相同，应该相等
         MerkleTree leaf1 = new MerkleTree("1", 1);
         MerkleTree leaf2 = new MerkleTree("2", 2);
         MerkleTree internal1 = new MerkleTree(leaf1, leaf2);

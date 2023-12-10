@@ -6,33 +6,21 @@ public class MerkleTree {
     private MerkleTree left, right;
     private int start, end, size, nextPower;
 
-
-    // Getter for left child
     public MerkleTree getLeft() {
         return left;
     }
-
-    // Getter for right child
     public MerkleTree getRight() {
         return right;
     }
-
-    // Getter for start
     public int getStart() {
         return start;
     }
-
-    // Getter for end
     public int getEnd() {
         return end;
     }
-
-    // Getter for size
     public int getSize() {
         return size;
     }
-
-    // Getter for nextPower
     public int getNextPower() {
         return nextPower;
     }
